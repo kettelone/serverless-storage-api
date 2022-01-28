@@ -9,6 +9,15 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "aws-sdk": "^2.1047.0"
+    "aws-sdk": "^2.1063.0",
+    "file-type": "^17.1.1",
+    "file-type-es5": "^6.2.1",
+    "i": "^0.3.7",
+    "npm": "^8.3.2",
+    "serverless-mysql": "^1.5.4",
+    "uuid": "^8.3.2"
+  },
+  "devDependencies": {
+    "serverless-offline": "^8.3.1"
   }
 }
