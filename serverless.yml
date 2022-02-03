@@ -29,11 +29,11 @@ package:
     individually: true
 
 custom:
-    imageUploadBucket: my-image-upload-bucket-demo-2901
-    MYSQL_DB_IDENTIFIER: database-for-urls
-    MYSQL_DB_NAME: databaseForUrls
-    MYSQL_USERNAME: admin
-    MYSQL_PASSWORD: pass1234
+    imageUploadBucket: S3_BUCKET_NAME
+    MYSQL_DB_IDENTIFIER: DB_IDENTIFIER
+    MYSQL_DB_NAME: DB_NAME
+    MYSQL_USERNAME: DB_USERNAME
+    MYSQL_PASSWORD: DB_PASSWORD
     MYSQL_HOST: 
       Fn::GetAtt: [MySqlRDSInstance, Endpoint.Address]
     MYSQL_PORT:
