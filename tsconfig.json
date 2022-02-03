@@ -1,0 +1,22 @@
+{    
+  "compilerOptions": {
+   "lib": ["ESNext"],//options can be ES5, ES6, ES2020, DOM ect.
+   "moduleResolution": "node",
+   "noUnusedLocals": true,
+   "esModuleInterop": true,
+   "noUnusedParameters": true,
+   "removeComments": true,
+   "target": "ES5",
+   "outDir": "./dist"
+ },
+ "include": ["src/"],
+ "exclude": [
+   "node_modules/**/*",
+   ".serverless/**/*",
+   ".webpack/**/*",
+   ".vscode/**/*"
+ ],
+ "ts-node": {
+   "require": ["tsconfig-paths/register"]
+ }
+}

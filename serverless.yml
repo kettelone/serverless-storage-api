@@ -29,19 +29,20 @@ package:
     individually: true
 
 custom:
-    imageUploadBucket: BUCKETNAME
-    MYSQL_DB_IDENTIFIER: DBIDENTIFIER
-    MYSQL_DB_NAME: DBNAME
-    MYSQL_USERNAME: USERNAME
-    MYSQL_PASSWORD: PASSWORD
+    imageUploadBucket: my-image-upload-bucket-demo-2901
+    MYSQL_DB_IDENTIFIER: database-for-urls
+    MYSQL_DB_NAME: databaseForUrls
+    MYSQL_USERNAME: admin
+    MYSQL_PASSWORD: pass1234
     MYSQL_HOST: 
       Fn::GetAtt: [MySqlRDSInstance, Endpoint.Address]
     MYSQL_PORT:
       Fn::GetAtt: [MySqlRDSInstance, Endpoint.Port]
 
 functions:
+
   loginUser:
-    handler: user/login.handler
+    handler: dist/functions/login.handler
     events:
       - http:
           path: user/login
@@ -49,7 +50,7 @@ functions:
           cors: true
 
   signupUser:
-    handler: user/signup.handler
+    handler: dist/functions/signup.handler
     events:
       - http:
           path: user/signup
@@ -57,7 +58,7 @@ functions:
           cors: true
 
   uploadAPI:
-    handler: user/uploadImage.handler
+    handler: dist/functions/uploadImage.handler
     events:
       - http:
           path: user/upload-image
@@ -74,7 +75,7 @@ functions:
               - email
   
   deleteImage:
-    handler: user/deleteImage.handler
+    handler: dist/functions/deleteImage.handler
     events: 
       - http:
           path: user/delete-image
@@ -91,7 +92,7 @@ functions:
               - email
 
   getImagesList:
-    handler: user/getImagesList.handler
+    handler: dist/functions/getImagesList.handler
     events:
       - http:
           path: user/get-image-list

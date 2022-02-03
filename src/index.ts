@@ -11,14 +11,5 @@ const sendResponse = (statusCode, body) => {
   return response
 }
 
-const validateInput = (data) => {
-  const body = JSON.parse(data)
-  const { email, password } = body
-  if (!email || !password || password.length < 6) return false
-  return true
-}
+export {sendResponse}
 
-module.exports = {
-  sendResponse,
-  validateInput,
-}

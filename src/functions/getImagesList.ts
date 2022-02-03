@@ -1,3 +1,5 @@
+import middy from '@middy/core'
+import httpErrorHandler from '@middy/http-error-handler'
 const mysql = require('serverless-mysql')()
 mysql.config({
   host: process.env.MYSQL_HOST,
@@ -6,8 +8,13 @@ mysql.config({
   user: process.env.MYSQL_USERNAME,
   password: process.env.MYSQL_PASSWORD,
 })
-const { sendResponse } = require('../functions')
-module.exports.handler = async (event) => {
+import { 
+  APIGatewayProxyEvent, 
+  APIGatewayProxyResult 
+} from "aws-lambda";
+import { sendResponse } from '../index'
+
+const baseHandler = async (event:APIGatewayProxyEvent):Promise<APIGatewayProxyResult> => {
   try {
     let users_login = event.requestContext.authorizer.claims.email
     let userInfo = await mysql.query(
@@ -23,3 +30,7 @@ module.exports.handler = async (event) => {
     return sendResponse(400, `${error}`)
   }
 }
+
+const handler = middy(baseHandler).use(httpErrorHandler()) // handles common http errors and returns proper responses
+
+module.exports.handler = handler

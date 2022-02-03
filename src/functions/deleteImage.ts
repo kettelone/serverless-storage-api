@@ -1,5 +1,10 @@
-const S3 = require('aws-sdk/clients/s3')
-const { sendResponse } = require('../functions')
+import S3 from 'aws-sdk/clients/s3'
+import { sendResponse } from '../index'
+import { 
+  APIGatewayProxyEvent, 
+  APIGatewayProxyResult 
+} from "aws-lambda";
+
 const s3 = new S3()
 const mysql = require('serverless-mysql')()
 mysql.config({
@@ -9,11 +14,14 @@ mysql.config({
   user: process.env.MYSQL_USERNAME,
   password: process.env.MYSQL_PASSWORD,
 })
+import middy from '@middy/core'
+import jsonBodyParser from '@middy/http-json-body-parser'
+import httpErrorHandler from '@middy/http-error-handler'
 
-module.exports.handler = async (event) => {
+const baseHandler = async (event:APIGatewayProxyEvent):Promise<APIGatewayProxyResult> => {
   try {
-    const body = JSON.parse(event.body)
-    let imageKey = body.key
+    // @ts-ignore
+    let imageKey = event.body.key
     //Delete from S3 bucket
     await s3
       .deleteObject({
@@ -26,15 +34,17 @@ module.exports.handler = async (event) => {
     await mysql.query(
       `DELETE from urls WHERE url = '${`https://${process.env.imageUploadBucket}.s3-${process.env.region}.amazonaws.com/${imageKey}`}'`
     )
-    let storedUrls = await mysql.query(`SELECT * FROM urls`)
-    let storedUser = await mysql.query('SELECT * FROM users')
 
     return sendResponse(200, {
       message: `${imageKey} was succesfully deleted from the bucket ${process.env.imageUploadBucket}`,
-      storedUrls,
-      storedUser,
     })
   } catch (error) {
     return sendResponse(400, error)
   }
 }
+
+const handler = middy(baseHandler)
+  .use(jsonBodyParser()) // parses the request body when it's a JSON and converts it to an object
+  .use(httpErrorHandler()) // handles common http errors and returns proper responses
+
+module.exports.handler = handler
