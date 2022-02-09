@@ -1,8 +1,10 @@
 service: serverless-cognito-auth
+useDotenv: true
 
 provider:
   name: aws
   runtime: nodejs14.x
+  lambdaHashingVersion: '20201221'
   region: eu-west-1
   environment:
     user_pool_id: { Ref: UserPool }
@@ -23,17 +25,17 @@ provider:
         - s3:*
       Resource: "*"
 plugins:
-  - serverless-offline
+  - serverless-webpack
 
 package:
     individually: true
 
 custom:
-    imageUploadBucket: S3_BUCKET_NAME
-    MYSQL_DB_IDENTIFIER: DB_IDENTIFIER
-    MYSQL_DB_NAME: DB_NAME
-    MYSQL_USERNAME: DB_USERNAME
-    MYSQL_PASSWORD: DB_PASSWORD
+    imageUploadBucket: ${env:IMAGE_UPLOAD_BUCKET}
+    MYSQL_DB_IDENTIFIER: ${env:MYSQL_DB_IDENTIFIER}
+    MYSQL_DB_NAME: ${env:MYSQL_DB_NAME}
+    MYSQL_USERNAME: ${env:MYSQL_USERNAME}
+    MYSQL_PASSWORD: ${env:MYSQL_PASSWORD}
     MYSQL_HOST: 
       Fn::GetAtt: [MySqlRDSInstance, Endpoint.Address]
     MYSQL_PORT:
@@ -42,7 +44,7 @@ custom:
 functions:
 
   loginUser:
-    handler: dist/functions/login.handler
+    handler: dist/lambdas/login/login.handler
     events:
       - http:
           path: user/login
@@ -50,7 +52,7 @@ functions:
           cors: true
 
   signupUser:
-    handler: dist/functions/signup.handler
+    handler: dist/lambdas/signup/signup.handler
     events:
       - http:
           path: user/signup
@@ -58,7 +60,7 @@ functions:
           cors: true
 
   uploadAPI:
-    handler: dist/functions/uploadImage.handler
+    handler: dist/lambdas/uploadImage/uploadImage.handler
     events:
       - http:
           path: user/upload-image
@@ -73,9 +75,19 @@ functions:
                 - Arn
             claims:
               - email
+
+  saveImageToDB:
+    handler: dist/lambdas/saveImageToDB/saveImageToDB.handler
+    events:
+      - s3:
+          bucket: ${self:custom.imageUploadBucket}
+          event: s3:ObjectCreated:*
+          existing: true
+     
+
   
   deleteImage:
-    handler: dist/functions/deleteImage.handler
+    handler: dist/lambdas/deleteImage/deleteImage.handler
     events: 
       - http:
           path: user/delete-image
@@ -92,7 +104,7 @@ functions:
               - email
 
   getImagesList:
-    handler: dist/functions/getImagesList.handler
+    handler: dist/lambdas/getImagesList/getImagesList.handler
     events:
       - http:
           path: user/get-image-list
@@ -107,6 +119,24 @@ functions:
                 - Arn
             claims:
               - email
+
+  generatePresignedUrl:
+    handler: dist/lambdas/generatePresignedUrl/generatePresignedUrl.handler
+    events:
+      - http:
+          path: user/generate-presigned-url
+          method: post
+          cors: true
+          authorizer:
+            name: PrivateAuthorizer
+            type: COGNITO_USER_POOLS
+            arn:
+              Fn::GetAtt:
+                - UserPool
+                - Arn
+            claims:
+              - email
+              
 
 resources:
   Resources:

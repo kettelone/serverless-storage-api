@@ -3,32 +3,43 @@ import middy from '@middy/core'
 import jsonBodyParser from '@middy/http-json-body-parser'
 import httpErrorHandler from '@middy/http-error-handler'
 import validator from '@middy/validator'
-import { 
-  APIGatewayProxyEvent, 
+import { sendResponse } from '../../utils/utils'
+import {AuthEvent} from '../../interfaces/interfaces'
+import {  
   APIGatewayProxyResult 
 } from "aws-lambda";
-import { sendResponse } from '../index'
 
 const cognito = new AWS.CognitoIdentityServiceProvider()
 
-const baseHandler = async (event:APIGatewayProxyEvent):Promise<APIGatewayProxyResult> => {
-  //@ts-ignore
+const baseHandler = async (event:AuthEvent):Promise<APIGatewayProxyResult> => {
   const { email, password } = event.body
-  const { user_pool_id, client_id } = process.env
+  const { user_pool_id } = process.env
   const params = {
-    AuthFlow: 'ADMIN_NO_SRP_AUTH',
     UserPoolId: user_pool_id,
-    ClientId: client_id,
-    AuthParameters: {
-      USERNAME: email,
-      PASSWORD: password,
-    },
+    Username: email,
+    UserAttributes: [
+      {
+        Name: 'email',
+        Value: email,
+      },
+      {
+        Name: 'email_verified',
+        Value: 'true',
+      },
+    ],
+    MessageAction: 'SUPPRESS',
   }
-  const response = await cognito.adminInitiateAuth(params).promise()
-  return sendResponse(200, {
-    message: 'Success',
-    token: response.AuthenticationResult.IdToken,
-  })
+  const response = await cognito.adminCreateUser(params).promise()
+  if (response.User) {
+    const paramsForSetPass = {
+      Password: password,
+      UserPoolId: user_pool_id,
+      Username: email,
+      Permanent: true,
+    }
+    await cognito.adminSetUserPassword(paramsForSetPass).promise()
+  }
+  return sendResponse(200, { message: 'User registration successful' })
 }
 
 const inputSchema = {
