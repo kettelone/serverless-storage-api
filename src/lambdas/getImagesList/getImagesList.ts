@@ -1,9 +1,11 @@
+import 'dotenv/config';
 import middy from '@middy/core';
 import httpErrorHandler from '@middy/http-error-handler';
+import cors from '@middy/http-cors';
 import {
     APIGatewayProxyResult,
 } from 'aws-lambda';
-import { sendResponse, configObject } from '../../utils/utils';
+import { configObject } from '../../MySQLConfig/config';
 import { GetImageEvent } from './index';
 
 const mysql = require('serverless-mysql')();
@@ -20,13 +22,20 @@ const baseHandler = async (event:GetImageEvent):Promise<APIGatewayProxyResult> =
         const imagesList = await mysql.query(
             `SELECT * FROM urls WHERE email_id = ${userId}`,
         );
-
-        return sendResponse(200, imagesList);
+        return {
+            statusCode: 200,
+            body: JSON.stringify({ imagesList }),
+        };
     } catch (error) {
-        return sendResponse(400, `${error}`);
+        return {
+            statusCode: 400,
+            body: JSON.stringify({ error }),
+        };
     }
 };
 
-const handler = middy(baseHandler).use(httpErrorHandler()); // handles common http errors and returns proper responses
+const handler = middy(baseHandler)
+    .use(cors({ origin: '*', credentials: true }))
+    .use(httpErrorHandler()); // handles common http errors and returns proper responses
 
 module.exports.handler = handler;

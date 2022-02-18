@@ -1,11 +1,13 @@
+import 'dotenv/config';
 import S3 from 'aws-sdk/clients/s3';
 import { v4 as uuidv4 } from 'uuid';
 import middy from '@middy/core';
 import httpErrorHandler from '@middy/http-error-handler';
+import cors from '@middy/http-cors';
 import {
     APIGatewayProxyResult,
 } from 'aws-lambda';
-import { sendResponse, configObject } from '../../utils/utils';
+import { configObject } from '../../MySQLConfig/config';
 import { UploadEvent } from './index';
 
 const s3 = new S3();
@@ -27,8 +29,13 @@ const baseHandler = async (event: UploadEvent):Promise<APIGatewayProxyResult> =>
         Expires: 3600, // seconds
         Bucket: process.env.imageUploadBucket,
     });
-    return sendResponse(200, { url, fields });
+    return {
+        statusCode: 200,
+        body: JSON.stringify({ url, fields }),
+    };
 };
-const handler = middy(baseHandler).use(httpErrorHandler()); // handles common http errors and returns proper responses
+const handler = middy(baseHandler)
+    .use(cors({ origin: '*', credentials: true }))
+    .use(httpErrorHandler());// handles common http errors and returns proper responses
 
 module.exports.handler = handler;

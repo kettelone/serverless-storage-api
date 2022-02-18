@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import S3 from 'aws-sdk/clients/s3';
 import {
     APIGatewayProxyResult,
@@ -5,7 +6,8 @@ import {
 import middy from '@middy/core';
 import jsonBodyParser from '@middy/http-json-body-parser';
 import httpErrorHandler from '@middy/http-error-handler';
-import { sendResponse, configObject } from '../../utils/utils';
+import cors from '@middy/http-cors';
+import { configObject } from '../../MySQLConfig/config';
 import { DeleteEvent } from './index';
 
 const s3 = new S3();
@@ -25,9 +27,10 @@ const baseHandler = async (event:DeleteEvent):Promise<APIGatewayProxyResult> => 
         );
 
         if (Object.keys(imageExist).length === 0) {
-            return sendResponse(200, {
-                message: `There is no image ${imageKey} in your storage`,
-            });
+            return {
+                statusCode: 200,
+                body: JSON.stringify({ message: `There is no image ${imageKey} in your storage` }),
+            };
         }
         // Delete from mySql
         await mysql.query(
@@ -40,17 +43,21 @@ const baseHandler = async (event:DeleteEvent):Promise<APIGatewayProxyResult> => 
                 Key: imageKey,
             })
             .promise();
-
-        return sendResponse(200, {
-            message: `${imageKey} was succesfully deleted from the bucket ${process.env.imageUploadBucket}`,
-        });
+        return {
+            statusCode: 200,
+            body: JSON.stringify({ message: `${imageKey} was succesfully deleted from the bucket ${process.env.imageUploadBucket}` }),
+        };
     } catch (error) {
-        return sendResponse(400, error);
+        return {
+            statusCode: 200,
+            body: JSON.stringify({ error }),
+        };
     }
 };
 
 const handler = middy(baseHandler)
-    .use(jsonBodyParser()) // parses the request body when it's a JSON and converts it to an object
+    .use(cors({ origin: '*', credentials: true }))
+    .use(jsonBodyParser())// parses the request body when it's a JSON and converts it to an object
     .use(httpErrorHandler()); // handles common http errors and returns proper responses
 
 module.exports.handler = handler;

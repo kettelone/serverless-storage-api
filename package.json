@@ -13,6 +13,7 @@
     "@aws-sdk/s3-presigned-post": "^3.49.0",
     "@aws-sdk/s3-request-presigner": "^3.49.0",
     "@middy/core": "^2.5.7",
+    "@middy/http-cors": "^2.5.7",
     "@middy/http-error-handler": "^2.5.7",
     "@middy/http-json-body-parser": "^2.5.7",
     "@middy/validator": "^2.5.7",

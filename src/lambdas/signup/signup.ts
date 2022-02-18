@@ -1,12 +1,13 @@
+import 'dotenv/config';
 import AWS from 'aws-sdk';
 import middy from '@middy/core';
 import jsonBodyParser from '@middy/http-json-body-parser';
 import httpErrorHandler from '@middy/http-error-handler';
 import validator from '@middy/validator';
+import cors from '@middy/http-cors';
 import {
     APIGatewayProxyResult,
 } from 'aws-lambda';
-import { sendResponse } from '../../utils/utils';
 import { AuthEvent } from './index';
 
 const cognito = new AWS.CognitoIdentityServiceProvider();
@@ -39,7 +40,10 @@ const baseHandler = async (event:AuthEvent):Promise<APIGatewayProxyResult> => {
         };
         await cognito.adminSetUserPassword(paramsForSetPass).promise();
     }
-    return sendResponse(200, { message: 'User registration successful' });
+    return {
+        statusCode: 200,
+        body: JSON.stringify({ message: 'User registration successful' }),
+    };
 };
 
 const inputSchema = {
@@ -59,6 +63,7 @@ const inputSchema = {
 };
 
 const handler = middy(baseHandler)
+    .use(cors({ origin: '*', credentials: true }))
     .use(jsonBodyParser()) // parses the request body when it's a JSON and converts it to an object
     .use(validator({ inputSchema })) // validates the input
     .use(httpErrorHandler()); // handles common http errors and returns proper responses

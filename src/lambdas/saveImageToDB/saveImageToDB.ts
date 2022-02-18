@@ -1,7 +1,9 @@
+import 'dotenv/config';
 import middy from '@middy/core';
 import httpErrorHandler from '@middy/http-error-handler';
 import jsonBodyParser from '@middy/http-json-body-parser';
-import { sendResponse, configObject } from '../../utils/utils';
+import cors from '@middy/http-cors';
+import { configObject } from '../../MySQLConfig/config';
 import { S3Event } from './index';
 
 const mysql = require('serverless-mysql')();
@@ -10,7 +12,7 @@ mysql.config(configObject);
 
 const baseHandler = async (event:S3Event) => {
     try {
-        //     //user login is a part of the key name
+        // user login is a part of the key name
         const imageKeyEncoded = event.Records[0].s3.object.key;
         const imageKey = decodeURIComponent(imageKeyEncoded);
         const end = imageKey.indexOf(':');
@@ -55,14 +57,20 @@ const baseHandler = async (event:S3Event) => {
 
         // Run clean up function
         await mysql.end();
-
-        return sendResponse(200, event);
+        return {
+            statusCode: 200,
+            body: JSON.stringify(event),
+        };
     } catch (error) {
-        return sendResponse(400, `${error}`);
+        return {
+            statusCode: 400,
+            body: JSON.stringify({ error }),
+        };
     }
 };
 
 const handler = middy(baseHandler)
+    .use(cors({ origin: '*', credentials: true }))
     .use(jsonBodyParser()) // parses the request body when it's a JSON and converts it to an object
     .use(httpErrorHandler()); // handles common http errors and returns proper responses
 
